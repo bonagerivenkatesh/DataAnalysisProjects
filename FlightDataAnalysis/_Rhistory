@@ -1,0 +1,184 @@
+shiny::runApp()
+library(shiny)
+library(ggplot2)
+library(dplyr)
+path <- "./tempdataset"
+files <- dir(path, pattern = '\\.csv', full.names = TRUE)
+tables <- lapply(files, read.csv)
+flightdata<-do.call(rbind, tables)
+busyrouteplot <- function(customdata)
+{
+uniqueorigin <-unique(customdata$ORIGIN_CITY_NAME)
+countorig <- length(uniqueorigin)
+total <- data.frame(DEST_CITY_NAME = character(0), count = numeric(0), ORIGIN_CITY_NAME = character(0))
+for (i in 1:countorig)
+{
+tempDB <- subset(customdata , ORIGIN_CITY_NAME == uniqueorigin[i])
+tempDB
+uniqueorigin[i]
+destgroupby <- group_by(tempDB,DEST_CITY_NAME)
+countme <- summarise(destgroupby, count=n())
+countme$ORIGIN_CITY_NAME=uniqueorigin[i]
+total <- rbind(total, countme)
+}
+busiestroute <- total[order(total$count,decreasing=T)[1:10],]
+ggplot(busiestroute, aes(x=factor(paste(as.character(busiestroute$ORIGIN_CITY_NAME),as.character(busiestroute$DEST_CITY_NAME),sep = ' to \n')),y=busiestroute$count))+ geom_bar(stat = "identity")
+# By default, uses stat="bin", which gives the count in each category
+return (busiestroute)
+}
+#busyrouteplot(flightdata)
+ui <- navbarPage("Flight Data Analysis",
+tabPanel("Busiest Routes",
+fluidPage(
+fluidRow(
+helpText("Know the busiest routes."),
+selectInput("var1",
+label = "Select year",
+choices = c("All", "2011",
+"2012", "2013","2014", "2015"),
+selected = "All"),
+selectInput("var2",
+label = "Select month",
+choices = c("All","1", "2","3", "4", "5", "6", "7", "8", "9", "10", "11", "12"),
+selected = "All"),
+submitButton("Submit")
+),
+hr(),
+plotOutput("plot1")
+)),
+tabPanel("Carrier Delay",
+fluidPage(
+fluidRow(
+helpText("Know the busiest routes."),
+uiOutput("selector")
+),
+hr(),
+plotOutput("plot2")
+)),
+tabPanel("Flights from source")
+)
+busyrouteplotcall <- function(year,month){
+customdatatosent = flightdata
+if(year!="All")
+{
+customdatatosent <- subset(customdatatosent , YEAR == year)
+}
+#if(month != "All")
+#{
+#    customdatatosent <- subset(customdatatosent , MONTH == month)
+#}
+return(busyrouteplot(customdatatosent))
+}
+server <- function(input, output) {
+busiestroute = busyrouteplot(flightdata)
+yearMonth <- input$var1
+busyrouteplotcall(yearMonth,yearMonth)
+output$plot1 <- renderPlot({
+ggplot(busiestroute, aes(x=factor(paste(as.character(busiestroute$ORIGIN_CITY_NAME),as.character(busiestroute$DEST_CITY_NAME),sep = ' to \n')),y=busiestroute$count))+ geom_bar(stat = "identity")
+})
+table1<-read.csv('./inputfiles/cities.csv', header = TRUE, stringsAsFactors = FALSE)
+output$selector <- renderUI({
+selectizeInput("var", "Choose name:", choices=as.vector(table1$DEST_CITY_NAME),
+options = list(
+placeholder = 'Please select an option below',
+onInitialize = I('function() { this.setValue(""); }')
+)) })
+}
+shinyApp(ui = ui, server = server)
+library(shiny)
+library(ggplot2)
+library(dplyr)
+path <- "./tempdataset"
+files <- dir(path, pattern = '\\.csv', full.names = TRUE)
+tables <- lapply(files, read.csv)
+flightdata<-do.call(rbind, tables)
+busyrouteplot <- function(customdata)
+{
+uniqueorigin <-unique(customdata$ORIGIN_CITY_NAME)
+countorig <- length(uniqueorigin)
+total <- data.frame(DEST_CITY_NAME = character(0), count = numeric(0), ORIGIN_CITY_NAME = character(0))
+for (i in 1:countorig)
+{
+tempDB <- subset(customdata , ORIGIN_CITY_NAME == uniqueorigin[i])
+tempDB
+uniqueorigin[i]
+destgroupby <- group_by(tempDB,DEST_CITY_NAME)
+countme <- summarise(destgroupby, count=n())
+countme$ORIGIN_CITY_NAME=uniqueorigin[i]
+total <- rbind(total, countme)
+}
+busiestroute <- total[order(total$count,decreasing=T)[1:10],]
+ggplot(busiestroute, aes(x=factor(paste(as.character(busiestroute$ORIGIN_CITY_NAME),as.character(busiestroute$DEST_CITY_NAME),sep = ' to \n')),y=busiestroute$count))+ geom_bar(stat = "identity")
+# By default, uses stat="bin", which gives the count in each category
+return (busiestroute)
+}
+#busyrouteplot(flightdata)
+ui <- navbarPage("Flight Data Analysis",
+tabPanel("Busiest Routes",
+fluidPage(
+fluidRow(
+helpText("Know the busiest routes."),
+selectInput("var1",
+label = "Select year",
+choices = c("All", "2011",
+"2012", "2013","2014", "2015"),
+selected = "All"),
+selectInput("var2",
+label = "Select month",
+choices = c("All","1", "2","3", "4", "5", "6", "7", "8", "9", "10", "11", "12"),
+selected = "All"),
+submitButton("Submit")
+),
+hr(),
+plotOutput("plot1")
+)),
+tabPanel("Carrier Delay",
+fluidPage(
+fluidRow(
+helpText("Know the busiest routes."),
+uiOutput("selector")
+),
+hr(),
+plotOutput("plot2")
+)),
+tabPanel("Flights from source")
+)
+busyrouteplotcall <- function(year,month){
+customdatatosent = flightdata
+if(year!="All")
+{
+customdatatosent <- subset(customdatatosent , YEAR == year)
+}
+#if(month != "All")
+#{
+#    customdatatosent <- subset(customdatatosent , MONTH == month)
+#}
+return(busyrouteplot(customdatatosent))
+}
+server <- function(input, output) {
+busiestroute = busyrouteplot(flightdata)
+yearMonth <- input$var1
+busyrouteplotcall(yearMonth,yearMonth)
+output$plot1 <- renderPlot({
+ggplot(busiestroute, aes(x=factor(paste(as.character(busiestroute$ORIGIN_CITY_NAME),as.character(busiestroute$DEST_CITY_NAME),sep = ' to \n')),y=busiestroute$count))+ geom_bar(stat = "identity")
+})
+table1<-read.csv('./inputfiles/cities.csv', header = TRUE, stringsAsFactors = FALSE)
+output$selector <- renderUI({
+selectizeInput("var", "Choose name:", choices=as.vector(table1$DEST_CITY_NAME),
+options = list(
+placeholder = 'Please select an option below',
+onInitialize = I('function() { this.setValue(""); }')
+)) })
+}
+shinyApp(ui = ui, server = server)
+path <- "./tempdataset"
+files <- dir(path, pattern = '\\.csv', full.names = TRUE)
+tables <- lapply(files, read.csv)
+flightdata<-do.call(rbind, tables)
+shiny::runApp()
+runApp()
+install.packages("dplyr")
+R.Version()
+source('E:/My Drive/Studies/SSDI/SSDI Project/Source Codes/15Nov/test1/server (1).R', echo=TRUE)
+install.packages("installr"); library(installr)
+updateR()
